@@ -1,5 +1,8 @@
 # Python
-from typing import Optional
+from typing import (
+    Optional, 
+    Any, 
+)
 import datetime
 
 # Django
@@ -62,24 +65,35 @@ class Item(models.Model):
         self.full_clean()
         return super().save( *args, **kwags)
 
-    def get_stripe_id(
-        self
+    def get_stripe_dict(
+        self, 
+        list_items: list[dict]
+    ) -> list[dict]:
+        if not hasattr(self, '_data_obj'):
+            self._data_obj: dict = {
+                'price_data': {
+                    'currency': 'usd',
+                    'unit_amount': self.amount,
+                    'product_data': {
+                        'name': self.name,
+                        'description': self.description
+                    }
+                },
+                'quantity': 0
+            }
+        
+        self._data_obj['quantity'] += 1
+        list_items.append(self._data_obj)
+        return list_items
+
+    def get_stripe_session(
+        self, 
+        line_items: list[dict]
     ) -> Optional[stripe.checkout.Session]:
+
         try:
             checkout_session = stripe.checkout.Session.create(
-                line_items=[
-                    {
-                        'price_data': {
-                            'currency': 'usd',
-                            'unit_amount': self.amount / 1000,
-                            'product_data': {
-                                'name': self.name,
-                                'description': self.description
-                            }
-                        },
-                        'quantity': 1
-                    },
-                ],
+                line_items=line_items,
                 mode='payment',
                 success_url=settings.DOMAIN + '/success',
                 cancel_url=settings.DOMAIN + '/cancel',

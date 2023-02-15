@@ -66,15 +66,17 @@ class StripeView(ViewSet, JsonResponseMixin):
     ) -> DRF_Response:
         """Handles GET-request with ID to show stripe id."""
 
-        item: Item = Item.objects.get_if_exist(pk)
+        line_items: list[dict] = []
+        item: Item = None
         try:
             item = Item.objects.get(id=pk)
         except Item.DoesNotExist:
             return self.get_json_response({
                 'message': f'Object {pk} does not exist'
             })
-
-        checkout_session = item.get_stripe_id()
+        line_items = item.get_stripe_dict(line_items)
+        line_items = item.get_stripe_dict(line_items)
+        checkout_session = item.get_stripe_session(line_items)
         if not checkout_session:
             return self.get_json_response({
                 'message': 'Server error'
