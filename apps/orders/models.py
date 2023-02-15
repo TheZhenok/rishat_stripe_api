@@ -4,6 +4,7 @@ from typing import (
     Any, 
 )
 import datetime
+from functools import cached_property
 
 # Django
 from django.db import models
@@ -12,6 +13,7 @@ from django.core.exceptions import (
     ObjectDoesNotExist
 )
 from django.conf import settings
+from django.db.models import QuerySet
 
 # Stripe
 import stripe
@@ -69,6 +71,7 @@ class Item(models.Model):
         self, 
         list_items: list[dict]
     ) -> list[dict]:
+
         if not hasattr(self, '_data_obj'):
             self._data_obj: dict = {
                 'price_data': {
@@ -84,6 +87,7 @@ class Item(models.Model):
         else:
             index: int = list_items.index(self._data_obj)
             list_items.pop(index)
+
         self._data_obj['quantity'] += 1
         list_items.append(self._data_obj)
         return list_items
@@ -135,3 +139,47 @@ class Item(models.Model):
     @property
     def amount(self) -> int:
         return int(self.price * 100)
+
+
+class OrderManager(models.Manager):
+    """Manager for order."""
+
+    def get_if_exist(
+        self, 
+        id: int
+    ) -> Optional['Order']:
+
+        try:
+            return self.get(id=id)
+        except ObjectDoesNotExist:
+            return None
+
+
+class Order(models.Model):
+    """Order have one or many items."""
+
+    datetime_created = models.DateTimeField(
+        verbose_name="время создания",
+        auto_created=True,
+        auto_now=True
+    )
+    item = models.ManyToManyField(
+        to=Item,
+        verbose_name="товар",
+        related_name='item'
+    )
+    objects = OrderManager()
+
+    class Meta:
+        ordering = (
+            '-datetime_created',
+        )
+        verbose_name = 'заказ'
+        verbose_name_plural = 'заказы'
+
+    def __str__(self) -> str:
+        return f'Order by {self.datetime_created}'
+
+    @cached_property
+    def full_price(self) -> float:
+        items: 

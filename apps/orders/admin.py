@@ -6,7 +6,10 @@ from django.contrib import admin
 from django.core.handlers.wsgi import WSGIRequest
 
 # Local
-from .models import Item
+from .models import (
+    Item,
+    Order,
+)
 
 
 class ItemAdmin(admin.ModelAdmin):
@@ -45,4 +48,11 @@ class ItemAdmin(admin.ModelAdmin):
             'price',
         )
 
+
+class OrderAdmin(admin.ModelAdmin):
+
+    model = Order
+
+
+admin.site.register(Order, OrderAdmin)
 admin.site.register(Item, ItemAdmin)

@@ -13,13 +13,16 @@ from rest_framework.routers import DefaultRouter
 # Apps
 from orders.views import (
     ItemView,
-    StripeView
+    StripeItemView,
+    OrderView,
+    StripeOrderView,
 )
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('item/<int:pk>/', ItemView.as_view(), name='item'),
+    path('order/<int:pk>/', OrderView.as_view(), name='order'),
     path('api-auth/', include('rest_framework.urls'))
 ] + static(
     settings.STATIC_URL, 
@@ -40,7 +43,8 @@ if settings.DEBUG:
 router: DefaultRouter = DefaultRouter(
     trailing_slash=False
 )
-router.register('buy', StripeView)
+router.register('buy', StripeItemView)
+router.register('buy/order', StripeOrderView)
 
 urlpatterns += [
     path('',include(router.urls)),

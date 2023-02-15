@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ctx_obj }}</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<body>
+    {% for obj in ctx_objs %}
+        <h1>{{ obj }}</h1>
+        <p>{{ obj.description }}</p>
+    {% endfor %}
+    <button id="buy-button">Buy</button>
+    <script type="text/javascript">
+        var stripe = Stripe(
+            '{{ ctx_stripe_pk }}'
+        );
+        var buyButton = document.getElementById('buy-button');
+        buyButton.addEventListener('click', () => {
+            fetch('/buy/order/{{ ctx_order.id }}', { 
+                method: 'GET' 
+            })
+                .then(response => response.json())
+                .then(session => stripe.redirectToCheckout({ sessionId: session.id }))
+        });
+    </script>
+</body>
+
+</html>

@@ -49,7 +49,8 @@ SHELL_PLUS_PRE_IMPORTS = [
 ]
 SHELL_PLUS_MODEL_ALIASES = {
     'orders': {
-        'Item': 'I'
+        'Item': 'I',
+        'Order': 'O'
     }
 }
 

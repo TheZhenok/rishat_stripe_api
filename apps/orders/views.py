@@ -19,8 +19,13 @@ from .mixins import (
     HttpResponseMixin,
     JsonResponseMixin,
 )
-from .models import Item
+from .models import (
+    Item,
+    Order,
+)
 
+
+stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
 class ItemView(View, HttpResponseMixin):
     """View by Item."""
@@ -52,12 +57,41 @@ class ItemView(View, HttpResponseMixin):
         )
 
 
-class StripeView(ViewSet, JsonResponseMixin):
+class OrderView(View, HttpResponseMixin):
+    """View by Item."""
+
+    template_name = 'orders/order.html'
+
+    def get(
+        self,
+        request: WSGIRequest,
+        pk: int,
+        *args: tuple,
+        **kwargs: dict
+    ) -> HttpResponse:
+        
+        order: Order = Order.objects.get_if_exist(pk)
+        if not order:
+            return self.get_http_error(
+                request=request,
+                error_message=f"Object {pk} does not exist"
+            )
+
+        return self.get_http_response(
+            request=request,
+            template_name=self.template_name,
+            context={
+                "ctx_order": order,
+                "ctx_objs": order.item.get_queryset(),
+                "ctx_stripe_pk": settings.STRIPE_PUBLIC_KEY
+            }
+        )
+
+
+class StripeItemView(ViewSet, JsonResponseMixin):
     """REST view for Stripe."""
 
-    stripe.api_key = settings.STRIPE_PRIVATE_KEY
-    queryset: QuerySet[Item] = \
-        Item.objects.all()
+    queryset: QuerySet[Item] = Item.objects.all()
 
     def retrieve(
         self, 
@@ -69,7 +103,7 @@ class StripeView(ViewSet, JsonResponseMixin):
         line_items: list[dict] = []
         item: Item = None
         try:
-            item = Item.objects.get(id=pk)
+            item = self.queryset.get(id=pk)
         except Item.DoesNotExist:
             return self.get_json_response({
                 'message': f'Object {pk} does not exist'
@@ -86,4 +120,38 @@ class StripeView(ViewSet, JsonResponseMixin):
             "id": checkout_session.id
         })
 
+
+class StripeOrderView(ViewSet, JsonResponseMixin):
+    """REST view for Stripe."""
+
+    queryset: QuerySet[Order] = Order.objects.all()
+
+    def retrieve(
+        self, 
+        request: DRF_Request, 
+        pk: int = 0
+    ) -> DRF_Response:
+        """Handles GET-request with ID to show stripe id."""
+
+        line_items: list[dict] = []
+        order: Order = None
+        try:
+            items = self.queryset.get(id=pk).item.get_queryset()
+        except Item.DoesNotExist:
+            return self.get_json_response({
+                'message': f'Object {pk} does not exist'
+            })
         
+        item: Item
+        for item in items:
+            line_items = item.get_stripe_dict(line_items)
+
+        checkout_session = item.get_stripe_session(line_items)
+        if not checkout_session:
+            return self.get_json_response({
+                'message': 'Server error'
+            }, 500)
+        
+        return self.get_json_response({
+            "id": checkout_session.id
+        })
