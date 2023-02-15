@@ -81,7 +81,9 @@ class Item(models.Model):
                 },
                 'quantity': 0
             }
-        
+        else:
+            index: int = list_items.index(self._data_obj)
+            list_items.pop(index)
         self._data_obj['quantity'] += 1
         list_items.append(self._data_obj)
         return list_items

@@ -74,7 +74,7 @@ class StripeView(ViewSet, JsonResponseMixin):
             return self.get_json_response({
                 'message': f'Object {pk} does not exist'
             })
-        line_items = item.get_stripe_dict(line_items)
+        
         line_items = item.get_stripe_dict(line_items)
         checkout_session = item.get_stripe_session(line_items)
         if not checkout_session:
