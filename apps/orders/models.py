@@ -263,6 +263,16 @@ class Discount(models.Model):
         ]
     )
 
+    @cached_property
+    def items_name(self) -> str:
+        result: str = ""
+
+        i: Item
+        for i in self.item.get_queryset():
+            result += i.name + " "
+
+        return result
+
     class Meta:
         ordering = (
             '-datetime_ending',
@@ -271,7 +281,7 @@ class Discount(models.Model):
         verbose_name_plural = 'скидки'
 
     def __str__(self) -> str:
-        return self.item + " " + self.persent + "%"
+        return f"{self.items_name} {self.persent}%"
 
 
 class Tax(models.Model):
