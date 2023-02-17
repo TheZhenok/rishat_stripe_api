@@ -13,7 +13,11 @@
 # Endpoints
 
 -- http://localhost:8000/admin - Admin panel
+
 -- http://localhost:8000/buy/<id> - GET Stripe item id
+
 -- http://localhost:8000/item/<id> - Get item info
+
 -- http://localhost:8000/buy/order/<id> - GET Stripe order id
+
 -- http://localhost:8000/order/<id> - Get order info
