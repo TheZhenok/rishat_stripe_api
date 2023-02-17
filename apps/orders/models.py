@@ -13,7 +13,11 @@ from django.core.exceptions import (
     ObjectDoesNotExist
 )
 from django.conf import settings
-from django.db.models import QuerySet
+from django.db.models import (
+    QuerySet,
+    Sum,
+)
+from django.core.validators import MaxValueValidator
 
 # Stripe
 import stripe
@@ -38,6 +42,10 @@ class Item(models.Model):
 
     MAX_PRICE = 999
     MIN_PRICE = 0
+    CURRENCY_PATTERN = (
+        ("usd", "USD"),
+        ("eur", "EUR"),
+    )
 
     name = models.CharField(
         verbose_name="имя",
@@ -51,6 +59,10 @@ class Item(models.Model):
         max_digits=6,
         decimal_places=2
     )
+    currency = models.CharField(
+        max_length=3, 
+        choices=CURRENCY_PATTERN
+    )
     objects = ItemManager()
 
     class Meta:
@@ -61,7 +73,11 @@ class Item(models.Model):
         verbose_name_plural = "предметы"
 
     def __str__(self) -> str:
-        return f"{self.name} | {self.price}$"
+        return f"{self.name} | {self.price}" + (
+            "$" if (
+                self.currency == "usd"
+            ) else "€"
+        )
 
     def save(self, *args, **kwags) -> None:
         self.full_clean()
@@ -75,14 +91,14 @@ class Item(models.Model):
         if not hasattr(self, '_data_obj'):
             self._data_obj: dict = {
                 'price_data': {
-                    'currency': 'usd',
+                    'currency': self.currency,
                     'unit_amount': self.amount,
                     'product_data': {
                         'name': self.name,
                         'description': self.description
-                    }
+                    },
                 },
-                'quantity': 0
+                'quantity': 0,
             }
         else:
             index: int = list_items.index(self._data_obj)
@@ -98,11 +114,25 @@ class Item(models.Model):
     ) -> Optional[stripe.checkout.Session]:
 
         try:
+            disconts_list: list[dict] = []
+            disconts: QuerySet[Discount] = Discount.objects.filter(
+                item=self.id
+            )
+            if disconts:
+                coupon = stripe.Coupon.create(
+                    percent_off=disconts.last().persent, 
+                    duration="once"
+                )
+                disconts_list.append({
+                    "coupon": coupon.id
+                })
+
             checkout_session = stripe.checkout.Session.create(
                 line_items=line_items,
                 mode='payment',
                 success_url=settings.DOMAIN + '/success',
                 cancel_url=settings.DOMAIN + '/cancel',
+                discounts=disconts_list,
             )
         except Exception as e:
             print(
@@ -163,10 +193,11 @@ class Order(models.Model):
         auto_created=True,
         auto_now=True
     )
-    item = models.ManyToManyField(
+    item = models.ForeignKey(
         to=Item,
+        on_delete=models.CASCADE,
         verbose_name="товар",
-        related_name='item'
+        related_name='order'
     )
     objects = OrderManager()
 
@@ -182,4 +213,40 @@ class Order(models.Model):
 
     @cached_property
     def full_price(self) -> float:
-        items: 
+        items: QuerySet[Item] = self.item.get_queryset()
+        return float(
+            items.aggregate(
+                sum=Sum('price')
+            ).get(
+                'sum'
+            )
+        )
+
+
+class Discount(models.Model):
+    """Discount in the form of coupons."""
+
+    MAX_PERSENT = 100
+
+    # Can use Celery.
+    datetime_ending = models.DateTimeField(
+        verbose_name="время завершения скидки"
+    )
+    item = models.ManyToManyField(
+        to=Item,
+        verbose_name="товар",
+        related_name='discont'
+    )
+    persent = models.PositiveSmallIntegerField(
+        verbose_name="размер скидки",
+        validators=[
+            MaxValueValidator(MAX_PERSENT)
+        ]
+    )
+
+    class Meta:
+        ordering = (
+            '-datetime_ending',
+        )
+        verbose_name = 'скидка'
+        verbose_name_plural = 'скидки'

@@ -9,6 +9,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from .models import (
     Item,
     Order,
+    Discount,
 )
 
 
@@ -27,6 +28,7 @@ class ItemAdmin(admin.ModelAdmin):
         ('Permissions', {
             'fields': (
                 'price',
+                'currency',
             )
         }),
     )
@@ -34,6 +36,7 @@ class ItemAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'price',
+        'currency',
     )
 
     def get_readonly_fields(
@@ -54,5 +57,11 @@ class OrderAdmin(admin.ModelAdmin):
     model = Order
 
 
+class DiscountAdmin(admin.ModelAdmin):
+
+    model = Discount
+
+
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Item, ItemAdmin)
+admin.site.register(Discount, DiscountAdmin)

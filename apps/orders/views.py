@@ -108,7 +108,7 @@ class StripeItemView(ViewSet, JsonResponseMixin):
             return self.get_json_response({
                 'message': f'Object {pk} does not exist'
             })
-        
+
         line_items = item.get_stripe_dict(line_items)
         checkout_session = item.get_stripe_session(line_items)
         if not checkout_session:
@@ -150,7 +150,7 @@ class StripeOrderView(ViewSet, JsonResponseMixin):
         if not checkout_session:
             return self.get_json_response({
                 'message': 'Server error'
-            }, 500)
+            }, 501)
         
         return self.get_json_response({
             "id": checkout_session.id
