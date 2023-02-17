@@ -90,9 +90,9 @@ class Item(models.Model):
 
         tax_list: list[int] = []
         taxs: QuerySet[Tax] = Tax.objects.filter(
-            id=self.id
+            item=self.id
         )
-
+        print(self.id)
         tax: Tax
         for tax in taxs:
             stripe_tax = stripe.TaxRate.create(
@@ -104,6 +104,8 @@ class Item(models.Model):
             )
             tax_list.append(stripe_tax.id)
 
+        print("===========================")
+        print(tax_list)
         if not hasattr(self, '_data_obj'):
             self._data_obj: dict = {
                 'price_data': {
@@ -290,7 +292,7 @@ class Tax(models.Model):
     )
     percentage = models.DecimalField(
         verbose_name="процент",
-        max_digits=3,
+        max_digits=5,
         decimal_places=2,
         validators=[
             MaxValueValidator(100)
@@ -300,8 +302,8 @@ class Tax(models.Model):
         verbose_name="код страны",
         max_length=4,
         choices=(
-            ('usd', 'USD'),
-            ('eur', 'EUR'),
+            ('US', 'USD'),
+            ('EG', 'EUR'),
         )
     )
     description = models.TextField(
