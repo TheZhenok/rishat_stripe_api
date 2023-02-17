@@ -10,6 +10,7 @@ from .models import (
     Item,
     Order,
     Discount,
+    Tax
 )
 
 
@@ -60,8 +61,39 @@ class OrderAdmin(admin.ModelAdmin):
 class DiscountAdmin(admin.ModelAdmin):
 
     model = Discount
+    list_display = (
+        'persent',
+    )
+
+
+class TaxAdmin(admin.ModelAdmin):
+
+    model = Tax
+    fieldsets = (
+        ('Информация о налоге', {
+            'fields': (
+                'display_name',
+                'inclusive',
+                'percentage',
+                'country',
+                'description',
+            )
+        }),
+        ('Предмет', {
+            'fields': (
+                'item',
+            )
+        }),
+    )
+    list_display = (
+        'items_name',
+        'display_name',
+        'percentage',
+        'country',
+    )
 
 
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Discount, DiscountAdmin)
+admin.site.register(Tax, TaxAdmin)

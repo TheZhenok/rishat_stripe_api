@@ -88,6 +88,22 @@ class Item(models.Model):
         list_items: list[dict]
     ) -> list[dict]:
 
+        tax_list: list[int] = []
+        taxs: QuerySet[Tax] = Tax.objects.filter(
+            id=self.id
+        )
+
+        tax: Tax
+        for tax in taxs:
+            stripe_tax = stripe.TaxRate.create(
+                display_name=tax.display_name,
+                inclusive=tax.inclusive,
+                percentage=tax.percentage,
+                country=tax.country,
+                description=tax.description,
+            )
+            tax_list.append(stripe_tax.id)
+
         if not hasattr(self, '_data_obj'):
             self._data_obj: dict = {
                 'price_data': {
@@ -99,6 +115,7 @@ class Item(models.Model):
                     },
                 },
                 'quantity': 0,
+                'tax_rates': tax_list
             }
         else:
             index: int = list_items.index(self._data_obj)
@@ -250,3 +267,60 @@ class Discount(models.Model):
         )
         verbose_name = 'скидка'
         verbose_name_plural = 'скидки'
+
+    def __str__(self) -> str:
+        return self.item + " " + self.persent + "%"
+
+
+class Tax(models.Model):
+    """Tax for item."""
+
+    item = models.ManyToManyField(
+        to=Item,
+        verbose_name="товар",
+        related_name='tax'
+    )
+    display_name = models.CharField(
+        verbose_name="название",
+        max_length=200
+    )
+    inclusive = models.BooleanField(
+        verbose_name="включает в стоимость",
+        default=False
+    )
+    percentage = models.DecimalField(
+        verbose_name="процент",
+        max_digits=3,
+        decimal_places=2,
+        validators=[
+            MaxValueValidator(100)
+        ]
+    )
+    country = models.CharField(
+        verbose_name="код страны",
+        max_length=4,
+        choices=(
+            ('usd', 'USD'),
+            ('eur', 'EUR'),
+        )
+    )
+    description = models.TextField(
+        verbose_name='описание'
+    )
+
+    class Meta:
+        ordering = (
+            '-percentage',
+        )
+        verbose_name = 'налог'
+        verbose_name_plural = 'налоги'
+
+    @cached_property
+    def items_name(self) -> str:
+        result: str = ""
+
+        i: Item
+        for i in self.item.get_queryset():
+            result += i.name
+
+        return result
