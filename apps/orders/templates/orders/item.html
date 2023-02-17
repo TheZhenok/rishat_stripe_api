@@ -11,6 +11,10 @@
 
 <body>
     <h1>{{ ctx_obj }}</h1>
+    {% if ctx_discount_price %}
+        <span>SALE -{{ ctx_discount.persent }}%</span>
+        <p>Price: {{ ctx_discount_price }}</p>
+    {% endif %}
     <p>{{ ctx_obj.description }}</p>
     <button id="buy-button">Buy</button>
     <script type="text/javascript">

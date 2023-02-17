@@ -22,6 +22,7 @@ from .mixins import (
 from .models import (
     Item,
     Order,
+    Discount
 )
 
 
@@ -41,17 +42,28 @@ class ItemView(View, HttpResponseMixin):
     ) -> HttpResponse:
         
         item: Item = Item.objects.get_if_exist(pk)
+        discount_price: int = None
         if not item:
             return self.get_http_error(
                 request=request,
                 error_message=f"Object {pk} does not exist"
             )
 
+        disconts: QuerySet[Discount] = Discount.objects.filter(
+            item=item.id
+        )
+        if disconts:
+            discount_price =\
+                item.price * disconts.last().persent / 100 
+            discount_price = item.price - discount_price
+
         return self.get_http_response(
             request=request,
             template_name=self.template_name,
             context={
                 "ctx_obj": item,
+                "ctx_discount_price": discount_price,
+                "ctx_discount": disconts.last(),
                 "ctx_stripe_pk": settings.STRIPE_PUBLIC_KEY
             }
         )
