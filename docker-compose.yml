@@ -9,5 +9,5 @@ services:
     environment:
       - SECRET_KEY=django_123
       - DEBUG=True
-      - STRIPE_PRIVATE_KEY=sk_test_51KYSFKKPoK5eDcjqGyh06NWDMGP5MokBYZDU5eFA6XbfKP6cyURTpK4UewH3aqpRp0LpUSrCkjVVK7Im9uUhpTg300xeEmOyw8
-      - STRIPE_PUBLIC_KEY=pk_test_51KYSFKKPoK5eDcjqHqBfCDb5KWJVAMRnGQFajmIli6Q8ARWuwSk3DQWDfEdaUExsmzeieUjb4fNwVZRT3kIGkvNX00EYm4lfgR
+      - STRIPE_PRIVATE_KEY=
+      - STRIPE_PUBLIC_KEY=

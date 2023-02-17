@@ -8,6 +8,7 @@ RUN pip install -r tools/requirements/base.txt
 RUN python3 manage.py makemigrations
 RUN python3 manage.py migrate
 RUN python3 manage.py test orders
+RUN python3 manage.py create_supuser
 
 EXPOSE 8000
 

@@ -22,14 +22,16 @@ class ItemTestCase(TestCase):
             Item.objects.create(
                 name='Name',
                 description='Temp description',
-                price=price
+                price=price,
+                currency='usd'
             )
 
     def test_item_creation(self):
         item = Item.objects.create(
             name='Temp',
             description='Temp description',
-            price=10
+            price=10,
+            currency='usd'
         )
         self.assertEqual(item.id, 201)
 
@@ -39,7 +41,8 @@ class ItemTestCase(TestCase):
             Item.objects.create,
             name='Temp',
             description='description',
-            price=-10
+            price=-10,
+            currency='usd'
         )
 
     def test_get_does_not_exist(self):
@@ -52,7 +55,8 @@ class ItemTestCase(TestCase):
         item: Item = Item.objects.create(
             name='Temp',
             description='Temp description',
-            price=10
+            price=10,
+            currency='usd'
         )
         temp_list: list[dict] = []
         temp_list = item.get_stripe_dict(temp_list)
@@ -67,7 +71,8 @@ class ItemTestCase(TestCase):
         item: Item = Item.objects.create(
             name='Temp',
             description='Temp description',
-            price=10
+            price=10,
+            currency='usd'
         )
         temp_list: list[dict] = []
         temp_list = item.get_stripe_dict(temp_list)
